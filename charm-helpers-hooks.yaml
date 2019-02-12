@@ -13,6 +13,6 @@ include:
     - payload.execd
     - contrib.network.ip
     - contrib.network.ufw
-    - contrib.python.packages
+    - contrib.python
     - contrib.charmsupport
     - contrib.hardening|inc=*
