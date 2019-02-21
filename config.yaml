@@ -5,25 +5,18 @@ options:
     description: |
       Repository from which to install.  May be one of the following:
       distro (default), ppa:somecustom/ppa, a deb url sources entry,
-      or a supported Cloud Archive release pocket.
+      or a supported Ubuntu Cloud Archive release pocket.
 
-      Supported Cloud Archive sources include:
+      Supported Ubuntu Cloud Archive sources include:
 
       cloud:<series>-<openstack-release>
       cloud:<series>-<openstack-release>/updates
       cloud:<series>-<openstack-release>/staging
       cloud:<series>-<openstack-release>/proposed
-
-      For series=Precise we support cloud archives for openstack-release:
-         * icehouse
-
-      For series=Trusty we support cloud archives for openstack-release:
-         * juno
-         * kilo
-         * ...
-
+      
       NOTE: updating this setting to a source that is known to provide
-      a later version of OpenStack will trigger a software upgrade.
+      a later version of OpenStack will trigger a software upgrade unless
+      the action-managed-upgrade configuration option is in play.
   block-device:
     default: sdb
     type: string
@@ -210,3 +203,22 @@ options:
     default: 512
     type: int
     description: XFS inode size to use for block devices.
+  storage-region:
+    default: 1
+    type: int
+    description: |
+      Swift storage region to request membership. Relevant only when the
+      swift-proxy charm has been configured with the Swift Global
+      Cluster feature.
+  object-server-port-rep:
+    default: 6010
+    type: int
+    description: Listening port of the swift-object-replicator server.
+  container-server-port-rep:
+    default: 6011
+    type: int
+    description: Listening port of the swift-container-replicator server.
+  account-server-port-rep:
+    default: 6012
+    type: int
+    description: Listening port of the swift-account-replicator server.

@@ -8,14 +8,12 @@ those are also managed by Juju.  For Swift to function, you'll also need to
 deploy an additional swift-proxy using the cs:precise/swift-proxy charm.
 
 For more information about Swift and its architecture, visit the official
-project website https://docs.openstack.org/developer/swift.
+[Swift project website][swift-project].
 
-This charm was developed to support deploying multiple version of Swift on
-Ubuntu Precise 12.04, as they relate to the release series of OpenStack.  That
-is, OpenStack Essex corresponds to Swift 1.4.8 while OpenStack Folsom shipped
-1.7.4.  This charm can be used to deploy either (and future) versions of Swift
-onto an Ubuntu Precise 12.04, making use of the Ubuntu Cloud Archive when
-needed.
+This charm is intended to track each LTS release of Ubuntu Server, as well as
+newer OpenStack releases via the Ubuntu Cloud Archive as supported by each
+Ubuntu LTS version.  Non-LTS (interim release) Ubuntu server versions are
+enabled in the charms strictly for development and testing purposes.
 
 Usage
 -----
@@ -32,6 +30,13 @@ If the swift-proxy charm is configured for manual zone assignment (recommended),
 the 'zone' option should be set for each swift-storage service being deployed.
 See the swift-proxy README for more information about zone assignment.
 
+**Region assignment**
+
+If the swift-proxy charm is configured with the Swift Global Cluster feature,
+the 'region' option should be set for each swift-storage service being deployed.
+See the [swift-proxy charm README][swift-proxy-charm-readme] for more information
+about the Swift Global Cluster feature.
+
 **Storage**
 
 Swift storage nodes require access to local storage and filesystem.  The charm
@@ -43,7 +48,8 @@ device(s) to use.  Options include:
    block devices should be listed as a space-separated list of device nodes.
  - a path to a local file on the filesystem with the size appended after a pipe,
    eg "/etc/swift/storagedev1.img|5G".  This will be created if it does not
-   exist and be mapped to a loopback device. Good for development and testing.
+   exist and be mapped to a loopback device. Intended strictly for development
+   and testing.
  - "guess" can be used to tell the charm to do its best to find a local devices
    to use. *EXPERIMENTAL*
 
@@ -52,7 +58,10 @@ will each be formatted as XFS file system and mounted at /srv/node/$devname.
 
 **Installation repository**
 
-The 'openstack-origin' setting allows Swift to be installed from installation
-repositories and can be used to setup access to the Ubuntu Cloud Archive
-to support installing Swift versions more recent than what is shipped with
-Ubuntu 12.04 (1.4.8).  For more information, see config.yaml.
+The 'openstack-origin' setting allows Swift to be installed from repositories
+such as the Ubuntu Cloud Archive, which enables installation of Swift versions
+more recent than what shipped with the Ubuntu LTS release.  For more
+information, see config.yaml.
+
+[swift-proxy-charm-readme]: https://opendev.org/openstack/charm-swift-proxy/src/branch/master/README.md
+[swift-project]: https://docs.openstack.org/developer/swift

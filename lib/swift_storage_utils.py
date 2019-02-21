@@ -136,32 +136,58 @@ REQUIRED_INTERFACES = {
 }
 
 ACCOUNT_SVCS = [
-    'swift-account', 'swift-account-auditor',
-    'swift-account-reaper', 'swift-account-replicator'
+    'swift-account', 'swift-account-auditor', 'swift-account-reaper'
+]
+
+ACCOUNT_SVCS_REP = [
+    'swift-account-replicator'
 ]
 
 CONTAINER_SVCS = [
-    'swift-container', 'swift-container-auditor',
-    'swift-container-updater', 'swift-container-replicator',
+    'swift-container', 'swift-container-auditor', 'swift-container-updater',
     'swift-container-sync'
 ]
 
-OBJECT_SVCS = [
-    'swift-object', 'swift-object-auditor',
-    'swift-object-updater', 'swift-object-replicator'
+CONTAINER_SVCS_REP = [
+    'swift-container-replicator'
 ]
 
-SWIFT_SVCS = ACCOUNT_SVCS + CONTAINER_SVCS + OBJECT_SVCS
+OBJECT_SVCS = [
+    'swift-object', 'swift-object-auditor', 'swift-object-updater'
+]
+
+OBJECT_SVCS_REP = [
+    'swift-object-replicator'
+]
+
+SWIFT_SVCS = (
+    ACCOUNT_SVCS + ACCOUNT_SVCS_REP + CONTAINER_SVCS + CONTAINER_SVCS_REP +
+    OBJECT_SVCS + OBJECT_SVCS_REP
+)
 
 RESTART_MAP = {
     '/etc/rsync-juju.d/050-swift-storage.conf': ['rsync'],
     '/etc/swift/account-server.conf': ACCOUNT_SVCS,
+    '/etc/swift/account-server/replicator.conf': ACCOUNT_SVCS_REP,
     '/etc/swift/container-server.conf': CONTAINER_SVCS,
+    '/etc/swift/container-server/replicator.conf': CONTAINER_SVCS_REP,
     '/etc/swift/object-server.conf': OBJECT_SVCS,
-    '/etc/swift/swift.conf': ACCOUNT_SVCS + CONTAINER_SVCS + OBJECT_SVCS
+    '/etc/swift/object-server/replicator.conf': OBJECT_SVCS_REP,
+    '/etc/swift/swift.conf': SWIFT_SVCS
+}
+
+LEGACY_RESTART_MAP = {
+    '/etc/rsync-juju.d/050-swift-storage.conf': ['rsync'],
+    '/etc/swift/account-server.conf': ACCOUNT_SVCS + ACCOUNT_SVCS_REP,
+    '/etc/swift/container-server.conf': CONTAINER_SVCS + CONTAINER_SVCS_REP,
+    '/etc/swift/object-server.conf': OBJECT_SVCS + OBJECT_SVCS_REP,
+    '/etc/swift/swift.conf': SWIFT_SVCS
 }
 
 SWIFT_CONF_DIR = '/etc/swift'
+SWIFT_ACCOUNT_CONF_DIR = os.path.join(SWIFT_CONF_DIR, 'account-server')
+SWIFT_CONTAINER_CONF_DIR = os.path.join(SWIFT_CONF_DIR, 'container-server')
+SWIFT_OBJECT_CONF_DIR = os.path.join(SWIFT_CONF_DIR, 'object-server')
 SWIFT_RING_EXT = 'ring.gz'
 
 FIRST = 1
@@ -184,6 +210,9 @@ def ensure_swift_directories():
     '''
     dirs = [
         SWIFT_CONF_DIR,
+        SWIFT_ACCOUNT_CONF_DIR,
+        SWIFT_CONTAINER_CONF_DIR,
+        SWIFT_OBJECT_CONF_DIR,
         '/var/cache/swift',
         '/srv/node',
     ]
@@ -193,6 +222,18 @@ def ensure_swift_directories():
 
 def vaultlocker_installed():
     return len(filter_installed_packages(['vaultlocker'])) == 0
+
+
+def enable_replication():
+    ubuntu_release = lsb_release()['DISTRIB_CODENAME'].lower()
+    return CompareHostReleases(ubuntu_release) > "trusty"
+
+
+def restart_map():
+    if enable_replication():
+        return RESTART_MAP
+    else:
+        return LEGACY_RESTART_MAP
 
 
 def register_configs():
@@ -216,6 +257,12 @@ def register_configs():
                             vaultlocker.VAULTLOCKER_BACKEND))
 
         configs.register('/etc/swift/%s-server.conf' % server, contexts)
+
+        if enable_replication():
+            configs.register(
+                '/etc/swift/{svc}-server/{svc}-server-replicator.conf'.format(
+                    svc=server),
+                contexts)
 
     return configs
 

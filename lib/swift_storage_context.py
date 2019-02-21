@@ -17,6 +17,11 @@ from charmhelpers.contrib.network.ip import (
     get_ipv6_addr,
 )
 
+from charmhelpers.core.host import (
+    lsb_release,
+    CompareHostReleases,
+)
+
 
 class SwiftStorageContext(OSContextGenerator):
     interfaces = ['swift-storage']
@@ -83,8 +88,11 @@ class SwiftStorageServerContext(OSContextGenerator):
         ctxt = {
             'local_ip': unit_private_ip(),
             'account_server_port': config('account-server-port'),
+            'account_server_port_rep': config('account-server-port-rep'),
             'container_server_port': config('container-server-port'),
+            'container_server_port_rep': config('container-server-port-rep'),
             'object_server_port': config('object-server-port'),
+            'object_server_port_rep': config('object-server-port-rep'),
             'object_server_threads_per_disk': config(
                 'object-server-threads-per-disk'),
             'account_max_connections': config('account-max-connections'),
@@ -97,4 +105,9 @@ class SwiftStorageServerContext(OSContextGenerator):
             'statsd_port': config('statsd-port'),
             'statsd_sample_rate': config('statsd-sample-rate'),
         }
+        ubuntu_release = lsb_release()['DISTRIB_CODENAME'].lower()
+        if CompareHostReleases(ubuntu_release) > "trusty":
+            ctxt['standalone_replicator'] = True
+        else:
+            ctxt['standalone_replicator'] = False
         return ctxt

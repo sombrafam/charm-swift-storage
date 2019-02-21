@@ -39,7 +39,7 @@ _add_path(_root)
 
 
 from lib.swift_storage_utils import (
-    RESTART_MAP,
+    restart_map,
     SWIFT_SVCS,
     determine_packages,
     do_openstack_upgrade,
@@ -57,6 +57,7 @@ from lib.swift_storage_utils import (
     VERSION_PACKAGE,
     setup_ufw,
     revoke_access,
+    enable_replication,
 )
 
 from lib.misc_utils import pause_aware_restart_on_change
@@ -65,6 +66,7 @@ from charmhelpers.core.hookenv import (
     Hooks, UnregisteredHookError,
     config,
     log,
+    network_get_primary_address,
     relation_get,
     relation_ids,
     relation_set,
@@ -214,7 +216,7 @@ def install():
 
 
 @hooks.hook('config-changed')
-@pause_aware_restart_on_change(RESTART_MAP)
+@pause_aware_restart_on_change(restart_map())
 @harden()
 def config_changed():
     if config('enable-firewall'):
@@ -286,7 +288,16 @@ def swift_storage_relation_joined(rid=None):
         'container_port': config('container-server-port'),
         'account_port': config('account-server-port'),
     }
-
+    if enable_replication():
+        replication_ip = network_get_primary_address('replication')
+        cluster_ip = network_get_primary_address('cluster')
+        rel_settings.update({
+            'ip_rep': replication_ip,
+            'ip_cls': cluster_ip,
+            'region': config('storage-region'),
+            'object_port_rep': config('object-server-port-rep'),
+            'container_port_rep': config('container-server-port-rep'),
+            'account_port_rep': config('account-server-port-rep')})
     db = kv()
     devs = db.get('prepared-devices', [])
     devs = [os.path.basename(d) for d in devs]
@@ -300,7 +311,7 @@ def swift_storage_relation_joined(rid=None):
 
 
 @hooks.hook('swift-storage-relation-changed')
-@pause_aware_restart_on_change(RESTART_MAP)
+@pause_aware_restart_on_change(restart_map())
 def swift_storage_relation_changed():
     setup_ufw()
     rings_url = relation_get('rings_url')

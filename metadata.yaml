@@ -23,6 +23,9 @@ series:
   - eoan
   - disco
   - trusty
+extra-bindings:
+  replication:
+  cluster:
 provides:
   nrpe-external-master:
     interface: nrpe-external-master

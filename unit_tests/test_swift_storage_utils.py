@@ -32,6 +32,7 @@ TO_PATCH = [
     'mkdir',
     'mount',
     'check_call',
+    'check_output',
     'call',
     'ensure_block_device',
     'clean_storage',
@@ -124,6 +125,13 @@ class SwiftStorageUtilsTests(CharmTestCase):
             swift_utils.ensure_swift_directories()
             ex_dirs = [
                 call('/etc/swift', owner='swift', group='swift'),
+                call('/etc/swift/account-server',
+                     owner='swift',
+                     group='swift'),
+                call('/etc/swift/container-server',
+                     owner='swift',
+                     group='swift'),
+                call('/etc/swift/object-server', owner='swift', group='swift'),
                 call('/var/cache/swift', owner='swift', group='swift'),
                 call('/srv/node', owner='swift', group='swift')
             ]
@@ -435,13 +443,29 @@ class SwiftStorageUtilsTests(CharmTestCase):
                                          'DISTRIB_DESCRIPTION': 'Ubuntu 14.04'}
         swift_utils.assert_charm_supports_ipv6()
 
+    def test_enable_replication(self):
+        self.lsb_release.return_value = {'DISTRIB_ID': 'Ubuntu',
+                                         'DISTRIB_RELEASE': '14.04',
+                                         'DISTRIB_CODENAME': 'trusty',
+                                         'DISTRIB_DESCRIPTION': 'Ubuntu 14.04'}
+        self.assertFalse(swift_utils.enable_replication())
+        self.lsb_release.return_value = {'DISTRIB_ID': 'Ubuntu',
+                                         'DISTRIB_RELEASE': '18.04',
+                                         'DISTRIB_CODENAME': 'bionic',
+                                         'DISTRIB_DESCRIPTION': 'Ubuntu 18.04'}
+        self.assertTrue(swift_utils.enable_replication())
+
+    @patch.object(swift_utils, 'enable_replication')
     @patch('charmhelpers.contrib.openstack.templating.OSConfigRenderer')
-    def test_register_configs_pre_install(self, renderer):
+    def test_register_configs_pre_install(self, renderer, enable_replication):
+        enable_replication.return_value = True
         self.get_os_codename_package.return_value = None
         swift_utils.register_configs()
         renderer.assert_called_with(templates_dir=swift_utils.TEMPLATES,
                                     openstack_release='essex')
 
+    @patch.object(swift_utils, 'vaultlocker_installed')
+    @patch.object(swift_utils, 'enable_replication')
     @patch.object(swift_utils, 'filter_installed_packages')
     @patch('charmhelpers.contrib.openstack.context.WorkerConfigContext')
     @patch('charmhelpers.contrib.openstack.context.BindHostContext')
@@ -452,7 +476,11 @@ class SwiftStorageUtilsTests(CharmTestCase):
     def test_register_configs_post_install(self, renderer,
                                            swift, rsync, server,
                                            bind_context, worker_context,
-                                           filter_installed_packages):
+                                           filter_installed_packages,
+                                           enable_replication,
+                                           vaultlocker_installed):
+        vaultlocker_installed.return_value = True
+        enable_replication.return_value = True
         filter_installed_packages.return_value = []
         swift.return_value = 'swift_context'
         rsync.return_value = 'rsync_context'
@@ -471,20 +499,50 @@ class SwiftStorageUtilsTests(CharmTestCase):
             call('/etc/swift/swift.conf', ['swift_server_context']),
             call('/etc/rsync-juju.d/050-swift-storage.conf',
                  ['rsync_context', 'swift_context']),
-            call('/etc/swift/account-server.conf', ['swift_context',
-                                                    'bind_host_context',
-                                                    'worker_context',
-                                                    'vl_context']),
-            call('/etc/swift/object-server.conf', ['swift_context',
-                                                   'bind_host_context',
-                                                   'worker_context',
-                                                   'vl_context']),
-            call('/etc/swift/container-server.conf', ['swift_context',
-                                                      'bind_host_context',
-                                                      'worker_context',
-                                                      'vl_context'])
+            call(
+                '/etc/swift/account-server.conf',
+                [
+                    'swift_context',
+                    'bind_host_context',
+                    'worker_context',
+                    'vl_context']),
+            call(
+                '/etc/swift/container-server.conf',
+                [
+                    'swift_context',
+                    'bind_host_context',
+                    'worker_context',
+                    'vl_context']),
+            call(
+                '/etc/swift/object-server.conf',
+                [
+                    'swift_context',
+                    'bind_host_context',
+                    'worker_context',
+                    'vl_context']),
+            call(
+                '/etc/swift/account-server/account-server-replicator.conf',
+                [
+                    'swift_context',
+                    'bind_host_context',
+                    'worker_context',
+                    'vl_context']),
+            call('/etc/swift/container-server/container-server-replicator.conf',
+                [
+                    'swift_context',
+                    'bind_host_context',
+                    'worker_context',
+                    'vl_context']),
+            call(
+                '/etc/swift/object-server/object-server-replicator.conf',
+                [
+                    'swift_context',
+                    'bind_host_context',
+                    'worker_context',
+                    'vl_context'])
         ]
-        self.assertEqual(ex, configs.register.call_args_list)
+        self.assertEqual(sorted(ex), sorted(configs.register.call_args_list))
+
 
     @patch.object(swift_utils, 'remove_old_packages')
     def test_do_upgrade_queens(self, mock_remove_old_packages):
