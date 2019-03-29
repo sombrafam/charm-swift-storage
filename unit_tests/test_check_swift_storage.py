@@ -106,7 +106,7 @@ class CheckSwiftStorageTestCase(unittest.TestCase):
         """
         Force ValueError on json to test try-catch
         """
-        jdata = PropertyMock(return_value='X')
+        jdata = PropertyMock(return_value=b'X')
         mock_urlopen.return_value = MagicMock(read=jdata)
         result = check_md5('.')
         mock_urlopen.assert_called_with('.ringmd5')
@@ -119,12 +119,12 @@ class CheckSwiftStorageTestCase(unittest.TestCase):
         """
         Force IOError (reading file) to test try-catch
         """
-        jdata = '{"/etc/swift/object.ring.gz": ' \
-                '"6b4f3a0ef3731f18291ecd053ce0d9b6", ' \
-                '"/etc/swift/account.ring.gz": ' \
-                '"93fc4ae496a7343362ebf13988a137e7", ' \
-                '"/etc/swift/container.ring.gz": ' \
-                '"0ea1ec9585ef644ce2b5c5b1dced4128"}'
+        jdata = b'{"/etc/swift/object.ring.gz": ' \
+                b'"6b4f3a0ef3731f18291ecd053ce0d9b6", ' \
+                b'"/etc/swift/account.ring.gz": ' \
+                b'"93fc4ae496a7343362ebf13988a137e7", ' \
+                b'"/etc/swift/container.ring.gz": ' \
+                b'"0ea1ec9585ef644ce2b5c5b1dced4128"}'
         pmock_jdata = PropertyMock(return_value=jdata)
         mock_generate_md5.side_effect = IOError()
         with patch('urllib.request.urlopen') as mock_urlopen:
@@ -142,12 +142,12 @@ class CheckSwiftStorageTestCase(unittest.TestCase):
         """
         Ensure md5 checksums match, STATUS_CRIT
         """
-        jdata = '{"/etc/swift/object.ring.gz": ' \
-                '"6b4f3a0ef3731f18291ecd053ce0d9b6", ' \
-                '"/etc/swift/account.ring.gz": ' \
-                '"93fc4ae496a7343362ebf13988a137e7", ' \
-                '"/etc/swift/container.ring.gz": ' \
-                '"0ea1ec9585ef644ce2b5c5b1dced4128"}'
+        jdata = b'{"/etc/swift/object.ring.gz": ' \
+                b'"6b4f3a0ef3731f18291ecd053ce0d9b6", ' \
+                b'"/etc/swift/account.ring.gz": ' \
+                b'"93fc4ae496a7343362ebf13988a137e7", ' \
+                b'"/etc/swift/container.ring.gz": ' \
+                b'"0ea1ec9585ef644ce2b5c5b1dced4128"}'
         pmock_jdata = PropertyMock(return_value=jdata)
         mock_generate_md5.return_value = 'xxxx'
         with patch('urllib.request.urlopen') as mock_urlopen:
@@ -165,12 +165,12 @@ class CheckSwiftStorageTestCase(unittest.TestCase):
         """
         Ensure md5 checksums match, STATUS_OK
         """
-        jdata = '{"/etc/swift/object.ring.gz": ' \
-                '"6b4f3a0ef3731f18291ecd053ce0d9b6", ' \
-                '"/etc/swift/account.ring.gz": ' \
-                '"6b4f3a0ef3731f18291ecd053ce0d9b6", ' \
-                '"/etc/swift/container.ring.gz": ' \
-                '"6b4f3a0ef3731f18291ecd053ce0d9b6"}'
+        jdata = b'{"/etc/swift/object.ring.gz": ' \
+                b'"6b4f3a0ef3731f18291ecd053ce0d9b6", ' \
+                b'"/etc/swift/account.ring.gz": ' \
+                b'"6b4f3a0ef3731f18291ecd053ce0d9b6", ' \
+                b'"/etc/swift/container.ring.gz": ' \
+                b'"6b4f3a0ef3731f18291ecd053ce0d9b6"}'
         pmock_jdata = PropertyMock(return_value=jdata)
         mock_generate_md5.return_value = '6b4f3a0ef3731f18291ecd053ce0d9b6'
         with patch('urllib.request.urlopen') as mock_urlopen:
@@ -216,7 +216,7 @@ class CheckSwiftStorageTestCase(unittest.TestCase):
         Force ValueError on json to test try-catch
         """
         base_url = 'http://localhost:6000/recon/'
-        jdata = PropertyMock(return_value='X')
+        jdata = PropertyMock(return_value=b'X')
         mock_urlopen.return_value = MagicMock(read=jdata)
         result = check_replication(base_url, [4, 10, 4, 10])
         self.assertEqual(result,
@@ -229,12 +229,12 @@ class CheckSwiftStorageTestCase(unittest.TestCase):
         Catch NULL replication value, STATUS_CRIT
         """
         base_url = 'http://localhost:6000/recon/'
-        jdata = '{"replication_last": 1493299546.629282, ' \
-                '"replication_stats": {"no_change": 0, "rsync": 0, ' \
-                '"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
-                '"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
-                '"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
-                '"empty": 0}, "replication_time": 0.0076580047607421875}'
+        jdata = b'{"replication_last": 1493299546.629282, ' \
+                b'"replication_stats": {"no_change": 0, "rsync": 0, ' \
+                b'"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
+                b'"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
+                b'"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
+                b'"empty": 0}, "replication_time": 0.0076580047607421875}'
         pmock_jdata = PropertyMock(return_value=jdata)
         mock_timestamp.return_value = (None, 0)
         with patch('urllib.request.urlopen') as mock_urlopen:
@@ -252,12 +252,12 @@ class CheckSwiftStorageTestCase(unittest.TestCase):
         Replication lag over CRIT threshold, STATUS_CRIT
         """
         base_url = 'http://localhost:6000/recon/'
-        jdata = '{"replication_last": 1493299546.629282, ' \
-                '"replication_stats": {"no_change": 0, "rsync": 0, ' \
-                '"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
-                '"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
-                '"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
-                '"empty": 0}, "replication_time": 0.0076580047607421875}'
+        jdata = b'{"replication_last": 1493299546.629282, ' \
+                b'"replication_stats": {"no_change": 0, "rsync": 0, ' \
+                b'"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
+                b'"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
+                b'"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
+                b'"empty": 0}, "replication_time": 0.0076580047607421875}'
         pmock_jdata = PropertyMock(return_value=jdata)
         mock_timestamp.return_value = (MagicMock(days=0, seconds=12), 0)
         with patch('urllib.request.urlopen') as mock_urlopen:
@@ -275,12 +275,12 @@ class CheckSwiftStorageTestCase(unittest.TestCase):
         Replication failures over CRIT threshold, STATUS_CRIT
         """
         base_url = 'http://localhost:6000/recon/'
-        jdata = '{"replication_last": 1493299546.629282, ' \
-                '"replication_stats": {"no_change": 0, "rsync": 0, ' \
-                '"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
-                '"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
-                '"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
-                '"empty": 0}, "replication_time": 0.0076580047607421875}'
+        jdata = b'{"replication_last": 1493299546.629282, ' \
+                b'"replication_stats": {"no_change": 0, "rsync": 0, ' \
+                b'"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
+                b'"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
+                b'"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
+                b'"empty": 0}, "replication_time": 0.0076580047607421875}'
         pmock_jdata = PropertyMock(return_value=jdata)
         mock_timestamp.return_value = (MagicMock(days=0, seconds=0), 12)
         with patch('urllib.request.urlopen') as mock_urlopen:
@@ -295,12 +295,12 @@ class CheckSwiftStorageTestCase(unittest.TestCase):
         Catch NULL value on failures stats, STATUS_CRIT
         """
         base_url = 'http://localhost:6000/recon/'
-        jdata = '{"replication_last": 1493299546.629282, ' \
-                '"replication_stats": {"no_change": 0, "rsync": 0, ' \
-                '"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
-                '"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
-                '"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
-                '"empty": 0}, "replication_time": 0.0076580047607421875}'
+        jdata = b'{"replication_last": 1493299546.629282, ' \
+                b'"replication_stats": {"no_change": 0, "rsync": 0, ' \
+                b'"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
+                b'"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
+                b'"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
+                b'"empty": 0}, "replication_time": 0.0076580047607421875}'
         pmock_jdata = PropertyMock(return_value=jdata)
         mock_timestamp.return_value = (MagicMock(days=0, seconds=0), -1)
         with patch('urllib.request.urlopen') as mock_urlopen:
@@ -317,12 +317,12 @@ class CheckSwiftStorageTestCase(unittest.TestCase):
         Replication lag over WARN threshold (below CRIT), STATUS_WARN
         """
         base_url = 'http://localhost:6000/recon/'
-        jdata = '{"replication_last": 1493299546.629282, ' \
-                '"replication_stats": {"no_change": 0, "rsync": 0, ' \
-                '"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
-                '"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
-                '"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
-                '"empty": 0}, "replication_time": 0.0076580047607421875}'
+        jdata = b'{"replication_last": 1493299546.629282, ' \
+                b'"replication_stats": {"no_change": 0, "rsync": 0, ' \
+                b'"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
+                b'"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
+                b'"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
+                b'"empty": 0}, "replication_time": 0.0076580047607421875}'
         pmock_jdata = PropertyMock(return_value=jdata)
         mock_timestamp.return_value = (MagicMock(days=0, seconds=5), 0)
         with patch('urllib.request.urlopen') as mock_urlopen:
@@ -340,12 +340,12 @@ class CheckSwiftStorageTestCase(unittest.TestCase):
         Replication lag CRITS with day wrap, STATUS_CRIT
         """
         base_url = 'http://localhost:6000/recon/'
-        jdata = '{"replication_last": 1493299546.629282, ' \
-                '"replication_stats": {"no_change": 0, "rsync": 0, ' \
-                '"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
-                '"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
-                '"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
-                '"empty": 0}, "replication_time": 0.0076580047607421875}'
+        jdata = b'{"replication_last": 1493299546.629282, ' \
+                b'"replication_stats": {"no_change": 0, "rsync": 0, ' \
+                b'"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
+                b'"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
+                b'"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
+                b'"empty": 0}, "replication_time": 0.0076580047607421875}'
         pmock_jdata = PropertyMock(return_value=jdata)
         mock_timestamp.return_value = (MagicMock(days=2, seconds=5), 0)
         with patch('urllib.request.urlopen') as mock_urlopen:
@@ -363,12 +363,12 @@ class CheckSwiftStorageTestCase(unittest.TestCase):
         Replication failures over WARN threshold (below CRIT), STATUS_WARN
         """
         base_url = 'http://localhost:6000/recon/'
-        jdata = '{"replication_last": 1493299546.629282, ' \
-                '"replication_stats": {"no_change": 0, "rsync": 0, ' \
-                '"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
-                '"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
-                '"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
-                '"empty": 0}, "replication_time": 0.0076580047607421875}'
+        jdata = b'{"replication_last": 1493299546.629282, ' \
+                b'"replication_stats": {"no_change": 0, "rsync": 0, ' \
+                b'"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
+                b'"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
+                b'"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
+                b'"empty": 0}, "replication_time": 0.0076580047607421875}'
         pmock_jdata = PropertyMock(return_value=jdata)
         mock_timestamp.return_value = (MagicMock(days=0, seconds=0), 5)
         # with patch('urllib2.urlopen') as mock_urlopen:
@@ -385,12 +385,12 @@ class CheckSwiftStorageTestCase(unittest.TestCase):
         STATUS_OK
         """
         base_url = 'http://localhost:6000/recon/'
-        jdata = '{"replication_last": 1493299546.629282, ' \
-                '"replication_stats": {"no_change": 0, "rsync": 0, ' \
-                '"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
-                '"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
-                '"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
-                '"empty": 0}, "replication_time": 0.0076580047607421875}'
+        jdata = b'{"replication_last": 1493299546.629282, ' \
+                b'"replication_stats": {"no_change": 0, "rsync": 0, ' \
+                b'"success": 0, "failure": 0, "attempted": 0, "ts_repl": 0, ' \
+                b'"remove": 0, "remote_merge": 0, "diff_capped": 0, ' \
+                b'"start": 1493299546.621624, "hashmatch": 0, "diff": 0, ' \
+                b'"empty": 0}, "replication_time": 0.0076580047607421875}'
         pmock_jdata = PropertyMock(return_value=jdata)
         mock_timestamp.return_value = (MagicMock(days=0, seconds=0), 0)
         with patch('urllib.request.urlopen') as mock_urlopen:

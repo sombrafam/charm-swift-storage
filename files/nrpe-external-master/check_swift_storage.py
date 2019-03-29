@@ -6,7 +6,8 @@
 
 import sys
 import json
-import urllib
+import urllib.error
+import urllib.request
 import argparse
 import hashlib
 import datetime
@@ -35,7 +36,7 @@ def check_md5(base_url):
                  "/etc/swift/container.ring.gz"]
     results = []
     try:
-        data = urllib.request.urlopen(url).read()
+        data = urllib.request.urlopen(url).read().decode('utf-8')
         ringmd5_info = json.loads(data)
     except urllib.error.URLError:
         return [(STATUS_UNKNOWN, "Can't open url: {}".format(url))]
@@ -97,7 +98,7 @@ def check_replication(base_url, limits):
     for repl in types:
         url = base_url + "replication/" + repl
         try:
-            data = urllib.request.urlopen(url).read()
+            data = urllib.request.urlopen(url).read().decode('utf-8')
             repl_info = json.loads(data)
         except urllib.error.URLError:
             results.append((STATUS_UNKNOWN, "Can't open url: {}".format(url)))
