@@ -253,8 +253,7 @@ class SwiftStorageBasicDeployment(OpenStackAmuletDeployment):
                                   'swift-object-updater']
         service_names = {
             self.keystone_sentry: ['keystone'],
-            self.glance_sentry: ['glance-registry',
-                                 'glance-api'],
+            self.glance_sentry: ['glance-api'],
             self.swift_proxy_sentry: ['swift-proxy'],
             self.swift_storage_sentry: swift_storage_services
         }
