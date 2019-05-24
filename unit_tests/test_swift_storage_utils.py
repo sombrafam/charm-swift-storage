@@ -242,11 +242,15 @@ class SwiftStorageUtilsTests(CharmTestCase):
     @patch.object(swift_utils, 'clean_storage')
     @patch.object(swift_utils, 'mkfs_xfs')
     @patch.object(swift_utils, 'determine_block_devices')
-    def test_setup_storage_no_overwrite(self, determine, mkfs, clean,
-                                        mock_is_device_in_ring, mock_Fstab):
+    @patch.object(swift_utils, 'get_device_blkid')
+    def test_setup_storage_no_overwrite(self, mock_get_device_blkid, determine,
+                                        mkfs, clean, mock_is_device_in_ring,
+                                        mock_Fstab):
         mock_is_device_in_ring.return_value = False
         self.is_device_mounted.return_value = False
         determine.return_value = ['/dev/vdb']
+        mock_get_device_blkid.return_value = \
+            '2d0b960f-f638-434c-bdbf-dca7f35a7af1'
         swift_utils.setup_storage()
         self.assertFalse(clean.called)
         calls = [call(['chown', '-R', 'swift:swift', '/srv/node/vdb']),
@@ -264,22 +268,25 @@ class SwiftStorageUtilsTests(CharmTestCase):
     @patch.object(swift_utils, 'clean_storage')
     @patch.object(swift_utils, 'mkfs_xfs')
     @patch.object(swift_utils, 'determine_block_devices')
-    def test_setup_storage_overwrite(self, determine, mkfs, clean,
-                                     mock_is_device_in_ring):
+    @patch.object(swift_utils, 'get_device_blkid')
+    def test_setup_storage_overwrite(self, mock_get_device_blkid, determine,
+                                     mkfs, clean, mock_is_device_in_ring):
         self.test_config.set('overwrite', True)
         mock_is_device_in_ring.return_value = False
         self.is_mapped_loopback_device.return_value = None
         self.is_device_mounted.return_value = False
         determine.return_value = ['/dev/vdb']
+        mock_get_device_blkid.return_value = \
+            '2d0b960f-f638-434c-bdbf-dca7f35a7af1'
         swift_utils.setup_storage()
         clean.assert_called_with('/dev/vdb')
         self.mkdir.assert_called_with('/srv/node/vdb', owner='swift',
                                       group='swift')
         self.mount.assert_called_with('/dev/vdb', '/srv/node/vdb',
                                       filesystem='xfs')
-        self.fstab_add.assert_called_with('/dev/vdb', '/srv/node/vdb',
-                                          'xfs',
-                                          options=None)
+        self.fstab_add.assert_called_with(
+            'UUID=2d0b960f-f638-434c-bdbf-dca7f35a7af1', '/srv/node/vdb',
+            'xfs', options=None)
         calls = [call(['chown', '-R', 'swift:swift', '/srv/node/vdb']),
                  call(['chmod', '-R', '0755', '/srv/node/vdb'])]
         self.check_call.assert_has_calls(calls)
@@ -313,9 +320,10 @@ class SwiftStorageUtilsTests(CharmTestCase):
     @patch.object(swift_utils, 'clean_storage')
     @patch.object(swift_utils, 'mkfs_xfs')
     @patch.object(swift_utils, 'determine_block_devices')
-    def test_setup_storage_encrypt(self, determine, mkfs, clean,
-                                   mock_is_device_in_ring, mock_Fstab,
-                                   mock_vaultlocker, mock_uuid):
+    @patch.object(swift_utils, 'get_device_blkid')
+    def test_setup_storage_encrypt(self, mock_get_device_blkid, determine,
+                                   mkfs, clean, mock_is_device_in_ring,
+                                   mock_Fstab, mock_vaultlocker, mock_uuid):
         mock_context = MagicMock()
         mock_context.complete = True
         mock_context.return_value = 'test_context'
@@ -325,6 +333,8 @@ class SwiftStorageUtilsTests(CharmTestCase):
         self.is_device_mounted.return_value = False
         self.is_mapped_loopback_device.return_value = None
         determine.return_value = ['/dev/vdb']
+        mock_get_device_blkid.return_value = \
+            '2d0b960f-f638-434c-bdbf-dca7f35a7af1'
         swift_utils.setup_storage(encrypt=True)
         self.assertFalse(clean.called)
         calls = [
@@ -493,8 +503,9 @@ class SwiftStorageUtilsTests(CharmTestCase):
     @patch.object(swift_utils, "is_device_in_ring")
     @patch.object(swift_utils, "mkfs_xfs")
     @patch.object(swift_utils, "determine_block_devices")
-    def test_setup_storage_img(self, determine, mkfs, mock_is_device_in_ring,
-                               mock_Fstab):
+    @patch.object(swift_utils, 'get_device_blkid')
+    def test_setup_storage_img(self, mock_get_device_blkid, determine, mkfs,
+                               mock_is_device_in_ring, mock_Fstab):
 
         class MockFstab(object):
 
@@ -506,6 +517,8 @@ class SwiftStorageUtilsTests(CharmTestCase):
         determine.return_value = ["/dev/loop0", ]
         self.is_mapped_loopback_device.return_value = "/srv/test.img"
         self.is_device_mounted.return_value = False
+        mock_get_device_blkid.return_value = \
+            '2d0b960f-f638-434c-bdbf-dca7f35a7af1'
         swift_utils.setup_storage()
         self.mount.assert_called_with(
             "/dev/loop0",
@@ -513,7 +526,7 @@ class SwiftStorageUtilsTests(CharmTestCase):
             filesystem="xfs",
         )
         self.fstab_add.assert_called_with(
-            '/dev/loop0',
+            'UUID=2d0b960f-f638-434c-bdbf-dca7f35a7af1',
             '/srv/node/loop0',
             'xfs',
             options='loop,nofail,defaults'
@@ -529,7 +542,9 @@ class SwiftStorageUtilsTests(CharmTestCase):
     @patch.object(swift_utils, "is_device_in_ring")
     @patch.object(swift_utils, "mkfs_xfs")
     @patch.object(swift_utils, "determine_block_devices")
-    def test_setup_storage_img_reuse_fstab_entry(self, determine, mkfs,
+    @patch.object(swift_utils, 'get_device_blkid')
+    def test_setup_storage_img_reuse_fstab_entry(self, mock_get_device_blkid,
+                                                 determine, mkfs,
                                                  mock_is_device_in_ring,
                                                  mock_Fstab):
 
@@ -549,6 +564,8 @@ class SwiftStorageUtilsTests(CharmTestCase):
         determine.return_value = ["/dev/loop0", ]
         self.is_mapped_loopback_device.return_value = "/srv/test.img"
         self.is_device_mounted.return_value = False
+        mock_get_device_blkid.return_value = \
+            '2d0b960f-f638-434c-bdbf-dca7f35a7af1'
         swift_utils.setup_storage()
         self.mount.assert_called_with(
             "/srv/test.img",
@@ -556,7 +573,7 @@ class SwiftStorageUtilsTests(CharmTestCase):
             filesystem="xfs",
         )
         self.fstab_add.assert_called_with(
-            '/srv/test.img',
+            'UUID=2d0b960f-f638-434c-bdbf-dca7f35a7af1',
             '/srv/node/loop0',
             'xfs',
             options='loop,nofail,defaults'

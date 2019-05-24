@@ -546,10 +546,11 @@ def setup_storage(encrypt=False):
                 dev = loopback_device
             options = "loop,nofail,defaults"
 
+        dev_blkid = "UUID=" + get_device_blkid(dev)
         filesystem = "xfs"
 
         mount(dev, mountpoint, filesystem=filesystem)
-        fstab_add(dev, mountpoint, filesystem, options=options)
+        fstab_add(dev_blkid, mountpoint, filesystem, options=options)
 
         check_call(['chown', '-R', 'swift:swift', mountpoint])
         check_call(['chmod', '-R', '0755', mountpoint])
