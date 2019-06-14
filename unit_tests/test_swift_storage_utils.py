@@ -616,9 +616,10 @@ class SwiftStorageUtilsTests(CharmTestCase):
         swift_utils.revoke_access(addr, port)
         self.ufw.revoke_access.assert_called_with(addr, port=port, proto='tcp')
 
+    @patch.object(swift_utils, 'get_host_ip')
     @patch.object(swift_utils, 'RsyncContext')
     @patch.object(swift_utils, 'grant_access')
-    def test_setup_ufw(self, mock_grant_access, mock_rsync):
+    def test_setup_ufw(self, mock_grant_access, mock_rsync, mock_get_host_ip):
         peer_addr_1 = '10.1.1.1'
         peer_addr_2 = '10.1.1.2'
         client_addrs = ['10.3.3.1', '10.3.3.2','10.3.3.3', 'ubuntu.com']
@@ -637,7 +638,6 @@ class SwiftStorageUtilsTests(CharmTestCase):
         context_call.return_value = {'allowed_hosts': '{} {}'
                                      ''.format(peer_addr_1, peer_addr_2)}
         mock_rsync.return_value = context_call
-        swift_utils.setup_ufw()
         calls = []
         for addr in [peer_addr_1, peer_addr_2] + client_addrs:
             for port in ports:
@@ -645,4 +645,14 @@ class SwiftStorageUtilsTests(CharmTestCase):
                     calls.append(call('91.189.94.40', port))
                 else:
                     calls.append(call(addr, port))
+
+        def _get_host_ip(ip):
+            if ip == 'ubuntu.com':
+                return '91.189.94.40'
+            else:
+                return ip
+
+        mock_get_host_ip.side_effect = _get_host_ip
+
+        swift_utils.setup_ufw()
         mock_grant_access.assert_has_calls(calls)
