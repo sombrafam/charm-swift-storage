@@ -206,3 +206,7 @@ options:
     description: |
       Encrypt block devices used by swift using dm-crypt, making use of
       vault for encryption key management; requires a relation to vault.
+  xfs-inode-size:
+    default: 512
+    type: int
+    description: XFS inode size to use for block devices.

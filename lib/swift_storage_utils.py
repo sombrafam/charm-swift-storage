@@ -522,7 +522,7 @@ def setup_storage(encrypt=False):
 
         try:
             # If not cleaned and in use, mkfs should fail.
-            mkfs_xfs(dev, force=reformat)
+            mkfs_xfs(dev, force=reformat, inode_size=config('xfs-inode-size'))
         except subprocess.CalledProcessError as exc:
             # This is expected is a formatted device is provided and we are
             # forcing the format.
