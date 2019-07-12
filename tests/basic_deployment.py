@@ -61,7 +61,7 @@ class SwiftStorageBasicDeployment(OpenStackAmuletDeployment):
            """
         this_service = {'name': 'swift-storage'}
         other_services = [
-            {'name': 'percona-cluster', 'constraints': {'mem': '3072M'}},
+            self.get_percona_service_entry(),
             {'name': 'keystone'},
             {'name': 'glance'},
             {'name': 'swift-proxy'}
