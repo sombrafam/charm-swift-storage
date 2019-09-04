@@ -169,11 +169,12 @@ class SwiftStorageRelationsTests(CharmTestCase):
     @patch.object(hooks, 'add_ufw_gre_rule', lambda *args: None)
     @patch.object(hooks, 'ensure_devs_tracked')
     def test_upgrade_charm(self, mock_ensure_devs_tracked):
-        self.filter_installed_packages.return_value = [
-            'python-psutil']
         hooks.upgrade_charm()
-        self.apt_install.assert_called_with([
-            'python-psutil'], fatal=True)
+        self.apt_install.assert_called_with(
+            ['gdisk', 'lvm2', 'swift', 'swift-account',
+             'swift-container', 'swift-object', 'python-jinja2',
+             'python-psutil', 'ufw', 'xfsprogs'],
+            fatal=True)
         self.assertTrue(self.update_nrpe_config.called)
         self.assertTrue(mock_ensure_devs_tracked.called)
 

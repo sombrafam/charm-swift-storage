@@ -25,6 +25,7 @@ import lib.swift_storage_utils as swift_utils
 TO_PATCH = [
     'apt_update',
     'apt_upgrade',
+    'apt_install',
     'log',
     'config',
     'configure_installation_source',
@@ -52,6 +53,8 @@ TO_PATCH = [
     'relation_ids',
     'vaultlocker',
     'kv',
+    'reset_os_release',
+    'CompareOpenStackReleases',
 ]
 
 
@@ -477,13 +480,15 @@ class SwiftStorageUtilsTests(CharmTestCase):
         ]
         self.assertEqual(ex, configs.register.call_args_list)
 
-    def test_do_upgrade(self):
+    @patch.object(swift_utils, 'remove_old_packages')
+    def test_do_upgrade_queens(self, mock_remove_old_packages):
         self.is_paused.return_value = False
-        self.test_config.set('openstack-origin', 'cloud:precise-grizzly')
-        self.get_os_codename_install_source.return_value = 'grizzly'
+        self.test_config.set('openstack-origin', 'cloud:bionic-queens')
+        self.get_os_codename_install_source.return_value = 'queens'
+        self.CompareOpenStackReleases.return_value = 'queens'
         swift_utils.do_openstack_upgrade(MagicMock())
         self.configure_installation_source.assert_called_with(
-            'cloud:precise-grizzly'
+            'cloud:bionic-queens'
         )
         dpkg_opts = [
             '--option', 'Dpkg::Options::=--force-confnew',
@@ -494,6 +499,49 @@ class SwiftStorageUtilsTests(CharmTestCase):
             options=dpkg_opts,
             fatal=True, dist=True
         )
+        self.apt_install.assert_called_with(
+            options=dpkg_opts,
+            packages=['gdisk', 'lvm2', 'swift', 'swift-account',
+                      'swift-container', 'swift-object', 'python-jinja2',
+                      'python-psutil', 'ufw', 'xfsprogs'],
+            fatal=True
+        )
+        self.assertTrue(mock_remove_old_packages.called)
+        self.assertTrue(self.reset_os_release.called)
+        services = (swift_utils.ACCOUNT_SVCS + swift_utils.CONTAINER_SVCS +
+                    swift_utils.OBJECT_SVCS)
+        for service in services:
+            self.assertIn(call(service), self.service_restart.call_args_list)
+
+    @patch.object(swift_utils, 'remove_old_packages')
+    def test_do_upgrade_train(self, mock_remove_old_packages):
+        self.is_paused.return_value = False
+        self.test_config.set('openstack-origin', 'cloud:bionic-train')
+        self.get_os_codename_install_source.return_value = 'train'
+        self.CompareOpenStackReleases.return_value = 'train'
+        swift_utils.do_openstack_upgrade(MagicMock())
+        self.configure_installation_source.assert_called_with(
+            'cloud:bionic-train'
+        )
+        dpkg_opts = [
+            '--option', 'Dpkg::Options::=--force-confnew',
+            '--option', 'Dpkg::Options::=--force-confdef',
+        ]
+        self.assertTrue(self.apt_update.called)
+        self.apt_upgrade.assert_called_with(
+            options=dpkg_opts,
+            fatal=True, dist=True
+        )
+        self.apt_install.assert_called_with(
+            options=dpkg_opts,
+            packages=['gdisk', 'lvm2', 'swift', 'swift-account',
+                      'swift-container', 'swift-object', 'ufw', 'xfsprogs',
+                      'python3-jinja2', 'python3-psutil', 'python3-six',
+                      'python3-swift'],
+            fatal=True
+        )
+        self.assertTrue(mock_remove_old_packages.called)
+        self.assertTrue(self.reset_os_release.called)
         services = (swift_utils.ACCOUNT_SVCS + swift_utils.CONTAINER_SVCS +
                     swift_utils.OBJECT_SVCS)
         for service in services:

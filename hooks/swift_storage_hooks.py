@@ -39,9 +39,9 @@ _add_path(_root)
 
 
 from lib.swift_storage_utils import (
-    PACKAGES,
     RESTART_MAP,
     SWIFT_SVCS,
+    determine_packages,
     do_openstack_upgrade,
     ensure_swift_directories,
     fetch_swift_rings,
@@ -103,6 +103,7 @@ from charmhelpers.contrib.openstack.utils import (
     is_unit_paused_set,
     set_unit_paused,
     set_unit_upgrading,
+    get_os_codename_install_source,
 )
 from charmhelpers.contrib.network.ip import (
     get_relation_ip,
@@ -200,10 +201,13 @@ def initialize_ufw():
 def install():
     status_set('maintenance', 'Executing pre-install')
     execd_preinstall()
-    configure_installation_source(config('openstack-origin'))
+    src = config('openstack-origin')
+    configure_installation_source(src)
     status_set('maintenance', 'Installing apt packages')
     apt_update()
-    apt_install(PACKAGES, fatal=True)
+    rel = get_os_codename_install_source(src)
+    pkgs = determine_packages(rel)
+    apt_install(pkgs, fatal=True)
     initialize_ufw()
     ensure_swift_directories()
 
@@ -262,7 +266,9 @@ def install_vaultlocker():
 @harden()
 def upgrade_charm():
     initialize_ufw()
-    apt_install(filter_installed_packages(PACKAGES), fatal=True)
+    rel = get_os_codename_install_source(config('openstack-origin'))
+    pkgs = determine_packages(rel)
+    apt_install(pkgs, fatal=True)
     update_nrpe_config()
     ensure_devs_tracked()
 

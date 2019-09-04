@@ -24,7 +24,11 @@ from lib.swift_storage_context import (
 
 from charmhelpers.fetch import (
     apt_upgrade,
-    apt_update
+    apt_update,
+    apt_install,
+    apt_purge,
+    apt_autoremove,
+    filter_missing_packages,
 )
 
 from charmhelpers.core.unitdata import (
@@ -57,6 +61,7 @@ from charmhelpers.core.hookenv import (
     ingress_address,
     storage_list,
     storage_get,
+    status_set,
 )
 
 from charmhelpers.contrib.network import ufw
@@ -77,6 +82,9 @@ from charmhelpers.contrib.openstack.utils import (
     get_os_codename_install_source,
     get_os_codename_package,
     save_script_rc as _save_script_rc,
+    CompareOpenStackReleases,
+    reset_os_release,
+    os_release,
 )
 
 from charmhelpers.contrib.openstack import (
@@ -93,9 +101,29 @@ import charmhelpers.contrib.openstack.vaultlocker as vaultlocker
 from charmhelpers.core.unitdata import kv
 
 PACKAGES = [
-    'swift', 'swift-account', 'swift-container', 'swift-object',
-    'xfsprogs', 'gdisk', 'lvm2', 'python-jinja2', 'python-psutil',
+    'gdisk',
+    'lvm2',
+    'swift',
+    'swift-account',
+    'swift-container',
+    'swift-object',
+    'python-jinja2',
+    'python-psutil',
     'ufw',
+    'xfsprogs',
+]
+
+PY3_PACKAGES = [
+    'python3-jinja2',
+    'python3-psutil',
+    'python3-six',
+    'python3-swift',
+]
+
+PURGE_PACKAGES = [
+    'python-jinja2',
+    'python-psutil',
+    'python-swift',
 ]
 
 VERSION_PACKAGE = 'swift-account'
@@ -163,7 +191,7 @@ def ensure_swift_directories():
 
 
 def register_configs():
-    release = get_os_codename_package('python-swift', fatal=False) or 'essex'
+    release = get_os_codename_package('swift', fatal=False) or 'essex'
     configs = templating.OSConfigRenderer(templates_dir=TEMPLATES,
                                           openstack_release=release)
     configs.register('/etc/swift/swift.conf',
@@ -179,6 +207,43 @@ def register_configs():
                           vaultlocker.VaultKVContext(
                               vaultlocker.VAULTLOCKER_BACKEND)]),
     return configs
+
+
+def determine_packages(release):
+    """Determine what packages are needed for a given OpenStack release."""
+    cmp_openstack = CompareOpenStackReleases(release)
+    pkgs = PACKAGES[:]
+    if cmp_openstack >= 'train':
+        pkgs = [p for p in pkgs if not p.startswith('python-')]
+        pkgs.extend(PY3_PACKAGES)
+    return pkgs
+
+
+def determine_purge_packages():
+    '''
+    Determine list of packages that where previously installed which are no
+    longer needed.
+
+    :returns: list of package names
+    '''
+    cmp_openstack = CompareOpenStackReleases(os_release('swift'))
+    if cmp_openstack >= 'train':
+        return PURGE_PACKAGES
+    return []
+
+
+def remove_old_packages():
+    '''Purge any packages that need to be removed.
+
+    :returns: bool Whether packages were removed.
+    '''
+    installed_packages = filter_missing_packages(determine_purge_packages())
+    if installed_packages:
+        log('Removing apt packages')
+        status_set('maintenance', 'Removing apt packages')
+        apt_purge(installed_packages, fatal=True)
+        apt_autoremove(purge=True, fatal=True)
+    return bool(installed_packages)
 
 
 def swift_init(target, action, fatal=False):
@@ -204,6 +269,10 @@ def do_openstack_upgrade(configs):
     ]
     apt_update()
     apt_upgrade(options=dpkg_opts, fatal=True, dist=True)
+    reset_os_release()
+    apt_install(packages=determine_packages(new_os_rel),
+                options=dpkg_opts, fatal=True)
+    remove_old_packages()
     configs.set_release(openstack_release=new_os_rel)
     configs.write_all()
     if not is_paused():
