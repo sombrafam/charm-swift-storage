@@ -29,6 +29,7 @@ from charmhelpers.fetch import (
     apt_purge,
     apt_autoremove,
     filter_missing_packages,
+    filter_installed_packages,
 )
 
 from charmhelpers.core.unitdata import (
@@ -190,6 +191,10 @@ def ensure_swift_directories():
      if not os.path.isdir(d)]
 
 
+def vaultlocker_installed():
+    return len(filter_installed_packages(['vaultlocker'])) == 0
+
+
 def register_configs():
     release = get_os_codename_package('swift', fatal=False) or 'essex'
     configs = templating.OSConfigRenderer(templates_dir=TEMPLATES,
@@ -200,12 +205,18 @@ def register_configs():
                      [RsyncContext(), SwiftStorageServerContext()])
     # NOTE: add VaultKVContext so interface status can be assessed
     for server in ['account', 'object', 'container']:
-        configs.register('/etc/swift/%s-server.conf' % server,
-                         [SwiftStorageServerContext(),
-                          context.BindHostContext(),
-                          context.WorkerConfigContext(),
-                          vaultlocker.VaultKVContext(
-                              vaultlocker.VAULTLOCKER_BACKEND)]),
+        contexts = [SwiftStorageServerContext(),
+                    context.BindHostContext(),
+                    context.WorkerConfigContext()]
+
+        # if vault deps are not installed it is not yet possible to check the
+        # vault context status since it requires the hvac dependency.
+        if vaultlocker_installed():
+            contexts.append(vaultlocker.VaultKVContext(
+                            vaultlocker.VAULTLOCKER_BACKEND))
+
+        configs.register('/etc/swift/%s-server.conf' % server, contexts)
+
     return configs
 
 
@@ -524,18 +535,26 @@ def ensure_devs_tracked():
 
 def setup_storage(encrypt=False):
     # Preflight check vault relation if encryption is enabled
-    vault_kv = vaultlocker.VaultKVContext(vaultlocker.VAULTLOCKER_BACKEND)
-    context = vault_kv()
-    if encrypt and not vault_kv.complete:
-        log("Encryption requested but vault relation not complete",
-            level=DEBUG)
-        return
-    elif encrypt and vault_kv.complete:
-        # NOTE: only write vaultlocker configuration once relation is complete
-        #       otherwise we run the chance of an empty configuration file
-        #       being installed on a machine with other vaultlocker based
-        #       services
-        vaultlocker.write_vaultlocker_conf(context, priority=90)
+    if encrypt:
+        if not vaultlocker_installed():
+            log("Encryption requested but vaultlocker not yet installed",
+                level=DEBUG)
+            return
+
+        vault_kv = vaultlocker.VaultKVContext(
+            secret_backend=vaultlocker.VAULTLOCKER_BACKEND
+        )
+        context = vault_kv()
+        if vault_kv.complete:
+            # NOTE: only write vaultlocker configuration once relation is
+            #       complete otherwise we run the chance of an empty
+            #       configuration file being installed on a machine with other
+            #       vaultlocker based services
+            vaultlocker.write_vaultlocker_conf(context, priority=90)
+        else:
+            log("Encryption requested but vault relation not complete",
+                level=DEBUG)
+            return
 
     # Ensure /srv/node exists just in case no disks
     # are detected and used.

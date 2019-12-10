@@ -316,6 +316,7 @@ class SwiftStorageUtilsTests(CharmTestCase):
         swift_utils.setup_storage()
         self.assertEqual(self.check_call.call_count, 0)
 
+    @patch.object(swift_utils, 'filter_installed_packages')
     @patch.object(swift_utils, "uuid")
     @patch.object(swift_utils, "vaultlocker")
     @patch.object(swift_utils.charmhelpers.core.fstab, "Fstab")
@@ -326,7 +327,9 @@ class SwiftStorageUtilsTests(CharmTestCase):
     @patch.object(swift_utils, 'get_device_blkid')
     def test_setup_storage_encrypt(self, mock_get_device_blkid, determine,
                                    mkfs, clean, mock_is_device_in_ring,
-                                   mock_Fstab, mock_vaultlocker, mock_uuid):
+                                   mock_Fstab, mock_vaultlocker, mock_uuid,
+                                   filter_installed_packages):
+        filter_installed_packages.return_value = []
         mock_context = MagicMock()
         mock_context.complete = True
         mock_context.return_value = 'test_context'
@@ -439,6 +442,7 @@ class SwiftStorageUtilsTests(CharmTestCase):
         renderer.assert_called_with(templates_dir=swift_utils.TEMPLATES,
                                     openstack_release='essex')
 
+    @patch.object(swift_utils, 'filter_installed_packages')
     @patch('charmhelpers.contrib.openstack.context.WorkerConfigContext')
     @patch('charmhelpers.contrib.openstack.context.BindHostContext')
     @patch.object(swift_utils, 'SwiftStorageContext')
@@ -447,7 +451,9 @@ class SwiftStorageUtilsTests(CharmTestCase):
     @patch('charmhelpers.contrib.openstack.templating.OSConfigRenderer')
     def test_register_configs_post_install(self, renderer,
                                            swift, rsync, server,
-                                           bind_context, worker_context):
+                                           bind_context, worker_context,
+                                           filter_installed_packages):
+        filter_installed_packages.return_value = []
         swift.return_value = 'swift_context'
         rsync.return_value = 'rsync_context'
         server.return_value = 'swift_server_context'

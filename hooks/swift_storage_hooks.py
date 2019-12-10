@@ -210,6 +210,7 @@ def install():
     apt_install(pkgs, fatal=True)
     initialize_ufw()
     ensure_swift_directories()
+    install_vaultlocker()
 
 
 @hooks.hook('config-changed')
@@ -433,8 +434,11 @@ def main():
     except UnregisteredHookError as e:
         log('Unknown hook {} - skipping.'.format(e))
     required_interfaces = copy.deepcopy(REQUIRED_INTERFACES)
-    if config('encrypt'):
+
+    if config('encrypt') and \
+            len(filter_installed_packages('vaultlocker')) == 0:
         required_interfaces['vault'] = ['secrets-storage']
+
     set_os_workload_status(CONFIGS, required_interfaces,
                            charm_func=assess_status)
     os_application_version_set(VERSION_PACKAGE)
