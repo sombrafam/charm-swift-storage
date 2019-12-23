@@ -176,7 +176,8 @@ class SwiftStorageRelationsTests(CharmTestCase):
         self.apt_install.assert_called_with(
             ['gdisk', 'lvm2', 'swift', 'swift-account',
              'swift-container', 'swift-object', 'python-jinja2',
-             'python-psutil', 'ufw', 'xfsprogs'],
+             'python-psutil', 'ufw', 'xfsprogs',
+             'libfile-readbackwards-perl', 'libtime-piece-perl'],
             fatal=True)
         self.assertTrue(self.update_nrpe_config.called)
         self.assertTrue(mock_ensure_devs_tracked.called)

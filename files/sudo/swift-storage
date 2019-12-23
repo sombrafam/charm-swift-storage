@@ -1,1 +1,2 @@
 nagios ALL=(swift) NOPASSWD:/usr/bin/swift-init status *
+nagios ALL=NOPASSWD:/usr/local/lib/nagios/plugins/check_timed_logs.pl *

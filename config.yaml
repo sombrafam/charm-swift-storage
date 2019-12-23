@@ -130,6 +130,20 @@ options:
     default: "-m -r 60 180 10 20"
     type: string
     description: String appended to nagios check
+  nagios-replication-check-params:
+    default: "replicated 15 2 1"
+    type: string
+    description: |
+      Space delimited parameters for check_swift_replicator_logs.sh.
+         search_pattern
+         interval_in_minutes
+         minimum_hits_before_warning
+         minimum_hits_before_critical
+      Default of "replicated 15 2 1" leads to warning alert when there
+      have not been at least 2 lines matching "replicated" in the last 15
+      minutes, and critical if there have been no matching lines in the
+      last 15 minutes.
+      Set to blank string "" to disable the check.
   nagios_context:
     default: "juju"
     type: string

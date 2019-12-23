@@ -567,7 +567,8 @@ class SwiftStorageUtilsTests(CharmTestCase):
             options=dpkg_opts,
             packages=['gdisk', 'lvm2', 'swift', 'swift-account',
                       'swift-container', 'swift-object', 'python-jinja2',
-                      'python-psutil', 'ufw', 'xfsprogs'],
+                      'python-psutil', 'ufw', 'xfsprogs',
+                      'libfile-readbackwards-perl', 'libtime-piece-perl'],
             fatal=True
         )
         self.assertTrue(mock_remove_old_packages.called)
@@ -600,6 +601,7 @@ class SwiftStorageUtilsTests(CharmTestCase):
             options=dpkg_opts,
             packages=['gdisk', 'lvm2', 'swift', 'swift-account',
                       'swift-container', 'swift-object', 'ufw', 'xfsprogs',
+                      'libfile-readbackwards-perl', 'libtime-piece-perl',
                       'python3-jinja2', 'python3-psutil', 'python3-six',
                       'python3-swift'],
             fatal=True

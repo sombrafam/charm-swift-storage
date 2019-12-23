@@ -112,6 +112,8 @@ PACKAGES = [
     'python-psutil',
     'ufw',
     'xfsprogs',
+    'libfile-readbackwards-perl',
+    'libtime-piece-perl',
 ]
 
 PY3_PACKAGES = [
