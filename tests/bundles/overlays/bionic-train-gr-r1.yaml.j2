@@ -1,0 +1,30 @@
+applications:
+  keystone:
+    offers:
+      keystone-offer:
+        endpoints:
+        - identity-service
+  swift-proxy-region1:
+    offers:
+      swift-proxy-region1-offer:
+        endpoints:
+        - swift-storage
+        - rings-distributor
+  swift-storage-region1-zone1:
+    charm: {{ charm_location }}
+    offers:
+      swift-storage-region1-zone1-offer:
+        endpoints:
+        - swift-storage
+  swift-storage-region1-zone2:
+    charm: {{ charm_location }}
+    offers:
+      swift-storage-region1-zone2-offer:
+        endpoints:
+        - swift-storage
+  swift-storage-region1-zone3:
+    charm: {{ charm_location }}
+    offers:
+      swift-storage-region1-zone3-offer:
+        endpoints:
+        - swift-storage
