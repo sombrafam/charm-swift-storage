@@ -259,7 +259,7 @@ def config_changed():
 def install_vaultlocker():
     """Determine whether vaultlocker is required and install"""
     if config('encrypt'):
-        pkgs = ['vaultlocker', 'python-hvac']
+        pkgs = ['vaultlocker']
         installed = len(filter_installed_packages(pkgs)) == 0
         if not installed:
             apt_install(pkgs, fatal=True)
