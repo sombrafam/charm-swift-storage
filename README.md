@@ -1,67 +1,119 @@
-Overview
---------
+# Overview
 
-This charm provides the swift-storage component of the OpenStack Swift object
-storage system.  It can be deployed as part of its own standalone storage
-cluster or it can be integrated with the other OpenStack components, assuming
-those are also managed by Juju.  For Swift to function, you'll also need to
-deploy an additional swift-proxy using the cs:precise/swift-proxy charm.
+OpenStack [Swift][swift-upstream] is a highly available, distributed,
+eventually consistent object/blob store.
 
-For more information about Swift and its architecture, visit the official
-[Swift project website][swift-project].
+The swift-storage charm deploys Swift's storage component. The charm's basic
+function is to initialise storage devices and manage the container, object, and
+account services. It works in tandem with the [swift-proxy][swift-proxy-charm]
+charm, which is used to add proxy nodes.
 
-This charm is intended to track each LTS release of Ubuntu Server, as well as
-newer OpenStack releases via the Ubuntu Cloud Archive as supported by each
-Ubuntu LTS version.  Non-LTS (interim release) Ubuntu server versions are
-enabled in the charms strictly for development and testing purposes.
+# Usage
 
-Usage
------
+## Configuration
 
-This charm is quite simple.  Its basic function is to get a storage device
-setup for swift usage, and run the container, object and account services.
-The deployment workflow for swift using this charm is covered in the README
-for the swift-proxy charm at cs:precise/swift-proxy.  The following are
-deployment options to take into consideration when deploying swift-storage.
+This section covers common configuration options. See file `config.yaml` for
+the full list of options, along with their descriptions and default values.
 
-**Zone assignment**
+### `zone`
 
-If the swift-proxy charm is configured for manual zone assignment (recommended),
-the 'zone' option should be set for each swift-storage service being deployed.
-See the swift-proxy README for more information about zone assignment.
+The `zone` option assigns a storage zone (an integer) to a storage node. A zone
+is associated with data replicas.
 
-**Region assignment**
+### `block-device`
 
-If the swift-proxy charm is configured with the Swift Global Cluster feature,
-the 'region' option should be set for each swift-storage service being deployed.
-See the [swift-proxy charm README][swift-proxy-charm-readme] for more information
-about the Swift Global Cluster feature.
+The `block-device` option specifies the device(s) that will be used on all
+machines associated with the application. Value types include:
 
-**Storage**
+* an actual block device (e.g. 'sdb' or '/dev/sdb'). A space-separated list is
+  used for multiple devices.
+* a path to a local file with the size appended after a pipe (e.g.
+  '/etc/swift/storagedev1.img|5G'). The file will be created if necessary and
+  be mapped to a loopback device. This is intended for development and testing
+  purposes.
 
-Swift storage nodes require access to local storage and filesystem.  The charm
-takes a 'block-device' config setting that can be used to specify which storage
-device(s) to use.  Options include:
+The resulting block device(s) will be XFS-formatted and use
+`/srv/node/<device-name>` as a mount point.
 
- - 1 or more local block devices (eg, sdb or /dev/sdb).  It's important that this
-   device be the same on all machine units assigned to this service.  Multiple
-   block devices should be listed as a space-separated list of device nodes.
- - a path to a local file on the filesystem with the size appended after a pipe,
-   eg "/etc/swift/storagedev1.img|5G".  This will be created if it does not
-   exist and be mapped to a loopback device. Intended strictly for development
-   and testing.
- - "guess" can be used to tell the charm to do its best to find a local devices
-   to use. *EXPERIMENTAL*
+### `storage-region`
 
-Multiple devices can be specified. In all cases, the resulting block device(s)
-will each be formatted as XFS file system and mounted at /srv/node/$devname.
+The `storage-region` option specifies a storage region (an integer). It is used
+only for multi-region (global) clusters.
 
-**Installation repository**
+## Deployment
 
-The 'openstack-origin' setting allows Swift to be installed from repositories
-such as the Ubuntu Cloud Archive, which enables installation of Swift versions
-more recent than what shipped with the Ubuntu LTS release.  For more
-information, see config.yaml.
+Let file ``swift.yaml`` contain the deployment configuration:
 
+```yaml
+    swift-proxy:
+        zone-assignment: manual
+        replicas: 3
+    swift-storage-zone1:
+        zone: 1
+        block-device: /dev/sdb
+    swift-storage-zone2:
+        zone: 2
+        block-device: /dev/sdb
+    swift-storage-zone3:
+        zone: 3
+        block-device: /dev/sdb
+```
+
+Deploy the proxy and storage nodes:
+
+    juju deploy --config swift.yaml swift-proxy
+    juju deploy --config swift.yaml swift-storage swift-storage-zone1
+    juju deploy --config swift.yaml swift-storage swift-storage-zone2
+    juju deploy --config swift.yaml swift-storage swift-storage-zone3
+
+Add relations between the proxy node and all storage nodes:
+
+    juju add-relation swift-proxy:swift-storage swift-storage-zone1:swift-storage
+    juju add-relation swift-proxy:swift-storage swift-storage-zone2:swift-storage
+    juju add-relation swift-proxy:swift-storage swift-storage-zone3:swift-storage
+
+This will result in a three-zone cluster, with each zone consisting of a single
+storage node, thereby satisfying the replica requirement of three.
+
+Storage capacity is increased by adding swift-storage units to a zone. For
+example, to add two storage nodes to zone '3':
+
+    juju add-unit -n 2 swift-storage-zone3
+
+> **Note**: When scaling out ensure the candidate machines are equipped with
+  the block devices currently configured for the associated application.
+
+This charm will not balance the storage ring until there are enough storage
+zones to meet its minimum replica requirement, in this case three.
+
+Appendix [Swift usage][cdg-app-swift] in the [OpenStack Charms Deployment
+Guide][cdg] offers in-depth guidance for deploying Swift with charms. In
+particular, it shows how to set up a multi-region (global) cluster.
+
+## Actions
+
+This section covers Juju [actions][juju-docs-actions] supported by the charm.
+Actions allow specific operations to be performed on a per-unit basis.
+
+* `openstack-upgrade`
+* `pause`
+* `resume`
+
+To display action descriptions run `juju actions swift-storage`.
+
+# Bugs
+
+Please report bugs on [Launchpad][lp-bugs-charm-swift-storage].
+
+For general charm questions refer to the [OpenStack Charm Guide][cg].
+
+<!-- LINKS -->
+
+[cg]: https://docs.openstack.org/charm-guide
+[cdg]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide
+[cdg-app-swift]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/app-swift.html
+[swift-proxy-charm]: https://jaas.ai/swift-proxy
 [swift-proxy-charm-readme]: https://opendev.org/openstack/charm-swift-proxy/src/branch/master/README.md
-[swift-project]: https://docs.openstack.org/developer/swift
+[swift-upstream]: https://docs.openstack.org/developer/swift
+[lp-bugs-charm-swift-storage]: https://bugs.launchpad.net/charm-swift-storage/+filebug
+[juju-docs-actions]: https://jaas.ai/docs/actions
