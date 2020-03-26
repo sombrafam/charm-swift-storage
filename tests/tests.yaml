@@ -1,5 +1,7 @@
 charm_name: swift-storage
 gate_bundles:
+  - focal-ussuri
+  - bionic-ussuri
   - bionic-train
   - bionic-stein
   - bionic-rocky
@@ -19,3 +21,6 @@ tests:
   - zaza.openstack.charm_tests.swift.tests.SwiftStorageTests
   - swift_gr_region1:
     - zaza.openstack.charm_tests.swift.tests.SwiftGlobalReplicationTests
+tests_options:
+  force_deploy:
+    - focal-ussuri
