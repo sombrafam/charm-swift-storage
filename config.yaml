@@ -126,6 +126,13 @@ options:
     type: int
     description: |
       Timeout value used when copying account/container/object data between nodes.
+  file-allocation-reserve:
+    default: 0
+    type: int
+    description: |
+      Set the reserve space for the swift filesystem mounts.
+      If a disk has less than this amount of space (in bytes) free, writes
+      will be handed off to another disk in the ring.
   nagios-check-params:
     default: "-m -r 60 180 10 20"
     type: string
