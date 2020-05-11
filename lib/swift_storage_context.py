@@ -101,6 +101,7 @@ class SwiftStorageServerContext(OSContextGenerator):
             'object_replicator_concurrency': config(
                 'object-replicator-concurrency'),
             'object_rsync_timeout': config('object-rsync-timeout'),
+            'object_handoffs_first': config('object-handoffs-first'),
             'statsd_host': config('statsd-host'),
             'statsd_port': config('statsd-port'),
             'statsd_sample_rate': config('statsd-sample-rate'),
