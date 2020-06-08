@@ -106,6 +106,12 @@ class SwiftStorageServerContext(OSContextGenerator):
             'statsd_port': config('statsd-port'),
             'statsd_sample_rate': config('statsd-sample-rate'),
         }
+        if config('node-timeout'):
+            node_timeout = config('node-timeout')
+            ctxt['node_timeout'] = node_timeout
+            # docs say this must always be higher
+            ctxt['http_timeout'] = max(60, node_timeout + 20)
+
         ubuntu_release = lsb_release()['DISTRIB_CODENAME'].lower()
         if CompareHostReleases(ubuntu_release) > "trusty":
             ctxt['standalone_replicator'] = True
