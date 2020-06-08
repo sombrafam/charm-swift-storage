@@ -17,7 +17,7 @@ import sys
 import unittest
 import urllib
 
-from mock import (
+from unittest.mock import (
     patch,
     mock_open,
     MagicMock,

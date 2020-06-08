@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from collections import namedtuple
-from mock import call, patch, MagicMock
+from unittest.mock import call, patch, MagicMock
 import shutil
 import tempfile
 

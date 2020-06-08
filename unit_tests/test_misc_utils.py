@@ -17,7 +17,7 @@ import tempfile
 import unittest
 import shutil
 
-from mock import patch
+from unittest.mock import patch
 
 from lib.misc_utils import ensure_block_device
 

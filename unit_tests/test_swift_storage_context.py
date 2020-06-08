@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from unit_tests.test_utils import CharmTestCase, patch_open
 
