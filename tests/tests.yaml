@@ -16,6 +16,9 @@ gate_bundles:
     - swift_gr_region2: bionic-train-gr-r2
 smoke_bundles:
   - bionic-train
+dev_bundles:
+  - focal-victoria
+  - groovy-victoria
 tests:
   - zaza.openstack.charm_tests.swift.tests.SwiftImageCreateTest
   - zaza.openstack.charm_tests.swift.tests.SwiftStorageTests
@@ -23,4 +26,4 @@ tests:
     - zaza.openstack.charm_tests.swift.tests.SwiftGlobalReplicationTests
 tests_options:
   force_deploy:
-    - focal-ussuri
+    - groovy-victoria
