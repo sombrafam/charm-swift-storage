@@ -81,6 +81,17 @@ class SwiftStorageContextTests(CharmTestCase):
             ctxt.enable_rsyncd()
             _file.write.assert_called_with('RSYNC_ENABLE=true\n')
 
+    def test_swift_storage_lockup_timeout_too_low(self):
+        self.test_config.set('object-rsync-timeout', 1000)
+        self.test_config.set('object-lockup-timeout', 1050)
+        ctxt = swift_context.SwiftStorageServerContext()
+        result = ctxt()
+        ex = {
+            'object_rsync_timeout': 1000,
+            'object_lockup_timeout': 2000,
+        }
+        self.assertDictContainsSubset(ex, result)
+
     def test_swift_storage_server_context(self):
         self.unit_private_ip.return_value = '10.0.0.5'
         self.test_config.set('account-server-port', '500')
@@ -94,7 +105,8 @@ class SwiftStorageContextTests(CharmTestCase):
         self.test_config.set('account-max-connections', '10')
         self.test_config.set('container-max-connections', '10')
         self.test_config.set('object-max-connections', '10')
-        self.test_config.set('object-rsync-timeout', '950')
+        self.test_config.set('object-rsync-timeout', 950)
+        self.test_config.set('object-lockup-timeout', 3000)
         self.test_config.set('object-handoffs-first', True)
         self.test_config.set('file-allocation-reserve', '10737418240')
         ctxt = swift_context.SwiftStorageServerContext()
@@ -112,7 +124,8 @@ class SwiftStorageContextTests(CharmTestCase):
             'account_max_connections': '10',
             'container_max_connections': '10',
             'object_max_connections': '10',
-            'object_rsync_timeout': '950',
+            'object_rsync_timeout': 950,
+            'object_lockup_timeout': 3000,
             'fallocate_reserve': '10737418240',
             'standalone_replicator': True,
             'object_handoffs_first': True,
