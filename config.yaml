@@ -114,6 +114,12 @@ options:
     type: int
     description: |
       Max duration of a partition rsync (in seconds).
+  object-lockup-timeout:
+    default: 1800
+    type: int
+    description: |
+      Attempt to kill all workers if nothing replicates for this amount of seconds
+      Note: this will always be set to no less than 2*object-rsync-timeout.
   object-handoffs-first:
     type: boolean
     default: False
