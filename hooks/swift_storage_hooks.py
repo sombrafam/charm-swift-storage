@@ -411,6 +411,32 @@ def update_nrpe_config():
         check_cmd='check_swift_storage.py {}'.format(
             config('nagios-check-params'))
     )
+
+    object_port = config('object-server-port')
+    container_port = config('container-server-port')
+    account_port = config('account-server-port')
+
+    nrpe_setup.add_check(
+        shortname="swift-object-server-api",
+        description="Check Swift Object Server API availability",
+        check_cmd="/usr/lib/nagios/plugins/check_http \
+                  -I localhost -u /recon/version -p {} \
+                  -e \"OK\"".format(object_port))
+
+    nrpe_setup.add_check(
+        shortname="swift-container-server-api",
+        description="Check Swift Container Server API availability",
+        check_cmd="/usr/lib/nagios/plugins/check_http \
+                  -I localhost -u /recon/version -p {} \
+                  -e \"OK\"".format(container_port))
+
+    nrpe_setup.add_check(
+        shortname="swift-account-server-api",
+        description="Check Swift Account Server API availability",
+        check_cmd="/usr/lib/nagios/plugins/check_http \
+                  -I localhost -u /recon/version -p {} \
+                  -e \"OK\"".format(account_port))
+
     if config('nagios-replication-check-params'):
         nrpe_setup.add_check(
             shortname='swift_replicator_health',
