@@ -1,5 +1,6 @@
 charm_name: swift-storage
 gate_bundles:
+  - focal-victoria
   - focal-ussuri
   - bionic-ussuri
   - bionic-train
@@ -17,7 +18,6 @@ gate_bundles:
 smoke_bundles:
   - bionic-train
 dev_bundles:
-  - focal-victoria
   - groovy-victoria
 tests:
   - zaza.openstack.charm_tests.swift.tests.SwiftImageCreateTest
