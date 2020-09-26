@@ -368,7 +368,7 @@ def get_mount_point(device):
 
 def find_block_devices(include_mounted=False):
     found = []
-    incl = ['sd[a-z]', 'vd[a-z]', 'cciss\/c[0-9]d[0-9]']
+    incl = ['sd[a-z]', 'vd[a-z]', r'cciss\/c[0-9]d[0-9]']
 
     with open('/proc/partitions') as proc:
         partitions = [p.split() for p in proc.readlines()[2:]]

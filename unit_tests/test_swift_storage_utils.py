@@ -110,7 +110,6 @@ TARGET        SOURCE   FSTYPE OPTIONS
 """
 
 
-
 class SwiftStorageUtilsTests(CharmTestCase):
 
     def setUp(self):
@@ -157,7 +156,7 @@ class SwiftStorageUtilsTests(CharmTestCase):
                            '-O', '/etc/swift/%s.ring.gz' % s])
                 wgets.append(_c)
             self.assertEqual(wgets, self.check_call.call_args_list)
-        except:
+        except Exception:
             shutil.rmtree(swift_utils.SWIFT_CONF_DIR)
 
     def test_determine_block_device_no_config(self):
@@ -367,11 +366,12 @@ class SwiftStorageUtilsTests(CharmTestCase):
             call('/srv/node/crypt-7c3ff7c8-fd20-4dca-9be6-6f44f213d3fe',
                  group='swift', owner='swift')
         ])
-        self.assertEqual(self.test_kv.get('prepared-devices'),
-                         ['/dev/mapper/crypt-7c3ff7c8-fd20-4dca-9be6-6f44f213d3fe'])
+        self.assertEqual(
+            self.test_kv.get('prepared-devices'),
+            ['/dev/mapper/crypt-7c3ff7c8-fd20-4dca-9be6-6f44f213d3fe'])
         mock_vaultlocker.write_vaultlocker_conf.assert_called_with(
-             'test_context',
-             priority=90
+            'test_context',
+            priority=90
         )
 
     @patch.object(swift_utils, "uuid")
@@ -414,7 +414,7 @@ class SwiftStorageUtilsTests(CharmTestCase):
 
     def test_find_block_devices_real_world(self):
         self.is_block_device.return_value = True
-        side_effect = lambda x: x in ["/dev/sdb", "/dev/sdb1"] # flake8: noqa
+        side_effect = lambda x: x in ["/dev/sdb", "/dev/sdb1"]  # noqa
         self.is_device_mounted.side_effect = side_effect
         with patch_open() as (_open, _file):
             _file.read.return_value = REAL_WORLD_PARTITIONS
@@ -527,12 +527,13 @@ class SwiftStorageUtilsTests(CharmTestCase):
                     'bind_host_context',
                     'worker_context',
                     'vl_context']),
-            call('/etc/swift/container-server/container-server-replicator.conf',
-                [
-                    'swift_context',
-                    'bind_host_context',
-                    'worker_context',
-                    'vl_context']),
+            call('/etc/swift/container-server/'
+                 'container-server-replicator.conf',
+                 [
+                     'swift_context',
+                     'bind_host_context',
+                     'worker_context',
+                     'vl_context']),
             call(
                 '/etc/swift/object-server/object-server-replicator.conf',
                 [
@@ -542,7 +543,6 @@ class SwiftStorageUtilsTests(CharmTestCase):
                     'vl_context'])
         ]
         self.assertEqual(sorted(ex), sorted(configs.register.call_args_list))
-
 
     @patch.object(swift_utils, 'remove_old_packages')
     def test_do_upgrade_queens(self, mock_remove_old_packages):
@@ -663,6 +663,7 @@ class SwiftStorageUtilsTests(CharmTestCase):
                                                  mock_Fstab):
 
         FstabEntry = namedtuple('FstabEntry', ['mountpoint', 'device'])
+
         class MockFstab(object):
 
             def __init__(self):
@@ -720,8 +721,8 @@ class SwiftStorageUtilsTests(CharmTestCase):
         port = '80'
         self.ufw.grant_access = MagicMock()
         swift_utils.grant_access(addr, port)
-        self.ufw.grant_access.assert_called_with(addr, port=port, index=1, proto='tcp')
-
+        self.ufw.grant_access.assert_called_with(
+            addr, port=port, index=1, proto='tcp')
 
     def test_revoke_access(self):
         addr = '10.1.1.1'
@@ -736,17 +737,17 @@ class SwiftStorageUtilsTests(CharmTestCase):
     def test_setup_ufw(self, mock_grant_access, mock_rsync, mock_get_host_ip):
         peer_addr_1 = '10.1.1.1'
         peer_addr_2 = '10.1.1.2'
-        client_addrs = ['10.3.3.1', '10.3.3.2','10.3.3.3', 'ubuntu.com']
+        client_addrs = ['10.3.3.1', '10.3.3.2', '10.3.3.3', 'ubuntu.com']
         ports = [6660, 6661, 6662]
         self.test_config.set('object-server-port', ports[0])
         self.test_config.set('container-server-port', ports[1])
         self.test_config.set('account-server-port', ports[2])
         RelatedUnits = namedtuple('RelatedUnits', 'rid, unit')
         self.iter_units_for_relation_name.return_value = [
-                RelatedUnits(rid='rid:1', unit='unit/1'),
-                RelatedUnits(rid='rid:1', unit='unit/2'),
-                RelatedUnits(rid='rid:1', unit='unit/3'),
-                RelatedUnits(rid='rid:1', unit='unit/4')]
+            RelatedUnits(rid='rid:1', unit='unit/1'),
+            RelatedUnits(rid='rid:1', unit='unit/2'),
+            RelatedUnits(rid='rid:1', unit='unit/3'),
+            RelatedUnits(rid='rid:1', unit='unit/4')]
         self.ingress_address.side_effect = client_addrs
         context_call = MagicMock()
         context_call.return_value = {'allowed_hosts': '{} {}'

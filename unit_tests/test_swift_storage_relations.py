@@ -171,7 +171,10 @@ class SwiftStorageRelationsTests(CharmTestCase):
 
     @patch.object(hooks, 'add_ufw_gre_rule', lambda *args: None)
     @patch.object(hooks, 'ensure_devs_tracked')
-    def test_upgrade_charm(self, mock_ensure_devs_tracked):
+    @patch.object(hooks, 'get_os_codename_install_source')
+    def test_upgrade_charm(self, mock_get_os_codename_install_source,
+                           mock_ensure_devs_tracked):
+        mock_get_os_codename_install_source.return_value = 'stein'
         hooks.upgrade_charm()
         self.apt_install.assert_called_with(
             ['gdisk', 'lvm2', 'swift', 'swift-account',
