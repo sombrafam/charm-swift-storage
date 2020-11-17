@@ -341,6 +341,8 @@ def swift_storage_relation_departed():
              config('container-server-port'),
              config('account-server-port')]
     removed_client = ingress_address()
+    # TODO(erlon): Check if we need to remove things from the ring in this case
+    #   too.
     if removed_client:
         for port in ports:
             revoke_access(removed_client, port)

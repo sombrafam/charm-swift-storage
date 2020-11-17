@@ -84,15 +84,22 @@ class RsyncContext(OSContextGenerator):
 class SwiftStorageServerContext(OSContextGenerator):
     interfaces = []
 
+    ring_related_configs = [
+        'account-server-port', 'account-server-port-rep',
+        'container-server-port', 'container-server-port-rep',
+        'object-server-port', 'object-server-port-rep']
+
     def __call__(self):
         ctxt = {
             'local_ip': unit_private_ip(),
+
             'account_server_port': config('account-server-port'),
             'account_server_port_rep': config('account-server-port-rep'),
             'container_server_port': config('container-server-port'),
             'container_server_port_rep': config('container-server-port-rep'),
             'object_server_port': config('object-server-port'),
             'object_server_port_rep': config('object-server-port-rep'),
+
             'object_server_threads_per_disk': config(
                 'object-server-threads-per-disk'),
             'account_max_connections': config('account-max-connections'),
@@ -108,10 +115,12 @@ class SwiftStorageServerContext(OSContextGenerator):
             'statsd_sample_rate': config('statsd-sample-rate'),
         }
 
-        # ensure lockup_timeout > rsync_timeout. See bug 1575277
+        # TODO(erlon): re-check this bug and confirm that we need
+        #  object_rsync_timeout to be > than 2*rsync_timeout
+        # ensure lockup_timeout > 2*rsync_timeout. See bug 1575277
         ctxt['object_lockup_timeout'] = max(
             config('object-lockup-timeout'),
-            2*ctxt['object_rsync_timeout']
+            2*ctxt['object_rsync_timeout'] + 10
         )
 
         if config('node-timeout'):

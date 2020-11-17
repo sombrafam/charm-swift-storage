@@ -167,6 +167,7 @@ SWIFT_SVCS = (
     OBJECT_SVCS + OBJECT_SVCS_REP
 )
 
+# TODO(erlon): Re-test and think about the map
 RESTART_MAP = {
     '/etc/rsync-juju.d/050-swift-storage.conf': ['rsync'],
     '/etc/swift/account-server.conf': ACCOUNT_SVCS,
